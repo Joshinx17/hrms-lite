@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import List
 from sqlalchemy import create_engine, Column, Integer, String, Date
@@ -46,6 +47,17 @@ Base.metadata.create_all(bind=engine)
 # -----------------------
 
 app = FastAPI(title="HRMS Lite API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -----------------------
 # SCHEMAS (VALIDATION)
@@ -95,8 +107,19 @@ def add_employee(employee: EmployeeCreate):
 def get_employees():
     db = SessionLocal()
     employees = db.query(Employee).all()
+
+    result = []
+    for emp in employees:
+        result.append({
+            "id": emp.id,
+            "employee_id": emp.employee_id,
+            "full_name": emp.full_name,
+            "email": emp.email,
+            "department": emp.department
+        })
+
     db.close()
-    return employees
+    return result
 
 
 @app.delete("/employees/{employee_id}")
@@ -146,3 +169,6 @@ def get_attendance(employee_id: str):
     db.close()
     return records
     
+@app.get("/")
+def root():
+    return {"message": "Backend is running"}    
