@@ -84,9 +84,14 @@ def add_employee(employee: EmployeeCreate):
     db = SessionLocal()
 
     # Check duplicate employee ID
-    existing = db.query(Employee).filter(Employee.employee_id == employee.employee_id).first()
-    if existing:
+    existing_id = db.query(Employee).filter(Employee.employee_id == employee.employee_id).first()
+    if existing_id:
         raise HTTPException(status_code=409, detail="Employee ID already exists")
+
+    # Check duplicate email
+    existing_email = db.query(Employee).filter(Employee.email == employee.email).first()
+    if existing_email:
+        raise HTTPException(status_code=409, detail="Email already exists")
 
     new_employee = Employee(
         employee_id=employee.employee_id,
@@ -148,6 +153,18 @@ def mark_attendance(attendance: AttendanceCreate):
     employee = db.query(Employee).filter(Employee.employee_id == attendance.employee_id).first()
     if not employee:
         raise HTTPException(status_code=404, detail="Employee does not exist")
+        
+    # Prevent duplicate attendance on same day
+    existing_attendance = db.query(Attendance).filter(
+        Attendance.employee_id == attendance.employee_id,
+        Attendance.date == attendance.date
+    ).first()
+
+    if existing_attendance:
+        raise HTTPException(
+            status_code=409,
+            detail="Attendance already marked for this employee on this date"
+        )
 
     record = Attendance(
         employee_id=attendance.employee_id,
@@ -165,9 +182,20 @@ def mark_attendance(attendance: AttendanceCreate):
 @app.get("/attendance/{employee_id}")
 def get_attendance(employee_id: str):
     db = SessionLocal()
-    records = db.query(Attendance).filter(Attendance.employee_id == employee_id).all()
+    records = db.query(Attendance).filter(
+        Attendance.employee_id == employee_id
+    ).all()
+
+    result = [
+        {
+            "date": record.date.isoformat(),
+            "status": record.status
+        }
+        for record in records
+    ]
+
     db.close()
-    return records
+    return result
     
 @app.get("/")
 def root():

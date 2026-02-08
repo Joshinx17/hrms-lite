@@ -5,6 +5,7 @@ function App() {
   // -----------------------
   // STATE
   // -----------------------
+  const [selectedDepartment, setSelectedDepartment] = useState("ALL");
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -118,6 +119,16 @@ function App() {
     return { present, absent };
   };
 
+  const departments = [
+    "ALL",
+    ...new Set(employees.map((emp) => emp.department)),
+  ];
+
+  const filteredEmployees =
+    selectedDepartment === "ALL"
+      ? employees
+      : employees.filter((emp) => emp.department === selectedDepartment);
+
   return (
     <div style={{ padding: "20px", fontFamily: "Arial", maxWidth: "600px" }}>
       <h1>HRMS Lite</h1>
@@ -170,6 +181,22 @@ function App() {
 
       <hr />
 
+      <label>
+        Filter by Department:&nbsp;
+        <select
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
+        >
+          {departments.map((dep) => (
+            <option key={dep} value={dep}>
+              {dep}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <hr />
+
       <h2>Employees</h2>
 
       {employees.length === 0 ? (
@@ -177,7 +204,7 @@ function App() {
       ) : (
         <>
           <ul>
-            {employees.map((emp) => (
+            {filteredEmployees.map((emp) => (
               <li key={emp.id} style={{ marginBottom: "15px" }}>
                 <strong>{emp.full_name}</strong>
                 <br />
@@ -220,8 +247,8 @@ function App() {
                 const summary = getAttendanceSummary();
                 return (
                   <p>
-                    ✅ Present: {summary.present} &nbsp; | &nbsp; 
-                    ❌ Absent:{" "} {summary.absent}
+                    ✅ Present: {summary.present} &nbsp; | &nbsp; ❌ Absent:{" "}
+                    {summary.absent}
                   </p>
                 );
               })()}

@@ -3,3 +3,4 @@ uvicorn
 pydantic[email]
 sqlalchemy
 python-multipart
+email-validator
