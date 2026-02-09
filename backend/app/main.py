@@ -9,10 +9,22 @@ from datetime import date
 # -----------------------
 # DATABASE SETUP
 # -----------------------
+import os
 
-DATABASE_URL = "sqlite:///./hrms.db"
+# Use PostgreSQL in production (Railway), SQLite in development
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    "sqlite:///./hrms.db"
+)
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Fix for PostgreSQL connection string
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
 SessionLocal = sessionmaker(bind=engine)
 
 Base = declarative_base()
